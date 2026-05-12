@@ -36,29 +36,21 @@ service cloud.firestore {
 
     // --- Entity Validations ---
 
-    function isValidSignup(data) {
-      return data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'timestamp']) &&
-             data.keys().size() == 5 &&
-             data.uid == request.auth.uid &&
-             data.email == request.auth.token.email &&
-             data.email is string && data.email.size() <= 512 &&
-             data.displayName is string && data.displayName.size() <= 200 &&
-             data.photoURL is string && data.photoURL.size() <= 2000 &&
+    function isValidDeviceRegistration(data) {
+      return data.keys().hasAll(['deviceId', 'timestamp']) &&
+             data.keys().size() == 2 &&
+             data.deviceId is string && data.deviceId.size() <= 128 &&
              data.timestamp == request.time;
     }
 
     // --- Collection Rules ---
 
-    match /registrations/{signupId} {
-      // Use UID as document ID to prevent duplicates
-      allow get: if isSignedIn() && (signupId == request.auth.uid || isAdmin());
-      allow list: if isAdmin();
-      
-      allow create: if isSignedIn() && 
-                      isValidId(signupId) && 
-                      signupId == request.auth.uid && 
-                      isValidSignup(incoming()) &&
-                      // Ensure the global counter is being incremented correctly
+    match /public_registrations/{deviceId} {
+      allow get: if true;
+      allow create: if isValidId(deviceId) && 
+                      isValidDeviceRegistration(incoming()) &&
+                      incoming().deviceId == deviceId &&
+                      // Atomic counter update
                       (
                         (exists(/databases/$(database)/documents/stats/global) && 
                          getAfter(/databases/$(database)/documents/stats/global).data.count == get(/databases/$(database)/documents/stats/global).data.count + 1)
@@ -66,25 +58,18 @@ service cloud.firestore {
                         (!exists(/databases/$(database)/documents/stats/global) && 
                          getAfter(/databases/$(database)/documents/stats/global).data.count == 1)
                       );
-                      
       allow update, delete: if false;
     }
 
-    match /users/{userId} {
-      allow read: if isSignedIn() && (userId == request.auth.uid || isAdmin());
-      allow create, update: if isSignedIn() && userId == request.auth.uid && isValidSignup(incoming());
-    }
-
     match /stats/global {
-      allow read: if true; // Publicly viewable counter
-      allow create: if isSignedIn() && incoming().count == 1 &&
-                      existsAfter(/databases/$(database)/documents/registrations/$(request.auth.uid));
-      allow update: if isSignedIn() && 
-                      incoming().count == (existing().count + 1) &&
-                      // Enforce that a new registration is created in the same batch
-                      existsAfter(/databases/$(database)/documents/registrations/$(request.auth.uid)) &&
-                      // Immutable count logic
-                      incoming().count is int;
+      allow read: if true;
+      allow create: if incoming().count == 1 &&
+                      existsAfter(/databases/$(database)/documents/public_registrations/$(incoming().initialDeviceId));
+      allow update: if incoming().count == (existing().count + 1) &&
+                      (
+                        existsAfter(/databases/$(database)/documents/public_registrations/$(request.resource.data.lastDeviceId)) ||
+                        isAdmin()
+                      );
     }
 
     match /admins/{adminId} {

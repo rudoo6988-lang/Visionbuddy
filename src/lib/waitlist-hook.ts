@@ -1,49 +1,57 @@
 import { useState, useEffect } from 'react';
-import { User } from 'firebase/auth';
 import { 
   doc, 
   getDoc, 
   serverTimestamp, 
-  collection, 
-  query, 
-  orderBy, 
   onSnapshot, 
   writeBatch, 
-  increment 
+  increment,
+  query,
+  collection,
+  orderBy
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from '../components/FirebaseProvider';
-import { WaitlistSignup, OperationType } from '../types';
+import { OperationType, WaitlistSignup } from '../types';
 import { handleFirestoreError } from './error-handler';
 
 export const useWaitlist = () => {
-  const { user } = useAuth();
   const [hasSignedUp, setHasSignedUp] = useState(false);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
 
-  // Check if user has already signed up
+  // Initialize device ID and check local state
   useEffect(() => {
-    if (!user) {
-      setHasSignedUp(false);
-      setLoading(false);
-      return;
+    let id = localStorage.getItem('visionbuddy_device_id');
+    const voted = localStorage.getItem('visionbuddy_has_voted') === 'true';
+
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('visionbuddy_device_id', id);
     }
 
-    const checkSignup = async () => {
+    setDeviceId(id);
+    setHasSignedUp(voted);
+
+    // Verify with server if we have an ID
+    const checkServerState = async () => {
       try {
-        const docRef = doc(db, 'registrations', user.uid);
+        const docRef = doc(db, 'public_registrations', id!);
         const docSnap = await getDoc(docRef);
-        setHasSignedUp(docSnap.exists());
+        if (docSnap.exists()) {
+          setHasSignedUp(true);
+          localStorage.setItem('visionbuddy_has_voted', 'true');
+        }
       } catch (error) {
-        console.error("Error checking signup state", error);
+        // Silently fail if server check fails (might be offline or rules)
       } finally {
         setLoading(false);
       }
     };
 
-    checkSignup();
-  }, [user]);
+    checkServerState();
+  }, []);
 
   // Real-time counter from stats/global
   useEffect(() => {
@@ -55,7 +63,6 @@ export const useWaitlist = () => {
         setTotalCount(0);
       }
     }, (error) => {
-      // Ignore permission errors - happens if stats doc doesn't exist yet and user doesn't have read access to root
       if (error.code !== 'permission-denied') {
         console.error("Stats sync error:", error);
       }
@@ -64,30 +71,27 @@ export const useWaitlist = () => {
     return unsubscribe;
   }, []);
 
-  const signUp = async (passedUser?: User | null) => {
-    const activeUser = passedUser || user;
-    if (!activeUser || hasSignedUp) return;
+  const signUp = async () => {
+    if (hasSignedUp || !deviceId) return;
     setLoading(true);
-    const path = `registrations/${activeUser.uid}`;
-    try {
-      // Final check if already signed up (robustness)
-      const docRef = doc(db, 'registrations', activeUser.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setHasSignedUp(true);
-        return;
-      }
+    
+    // Anti-spam cooldown check (3 seconds)
+    const lastClick = localStorage.getItem('visionbuddy_last_click');
+    if (lastClick && Date.now() - parseInt(lastClick) < 3000) {
+      setLoading(false);
+      return;
+    }
+    localStorage.setItem('visionbuddy_last_click', Date.now().toString());
 
+    const path = `public_registrations/${deviceId}`;
+    try {
       const batch = writeBatch(db);
       
-      const signupRef = doc(db, 'registrations', activeUser.uid);
+      const signupRef = doc(db, 'public_registrations', deviceId);
       const statsRef = doc(db, 'stats', 'global');
 
       const signupData = {
-        uid: activeUser.uid,
-        email: activeUser.email,
-        displayName: activeUser.displayName || 'Anonymous',
-        photoURL: activeUser.photoURL || '',
+        deviceId,
         timestamp: serverTimestamp(),
       };
       
@@ -95,16 +99,20 @@ export const useWaitlist = () => {
 
       const statsSnap = await getDoc(statsRef);
       if (!statsSnap.exists()) {
-        batch.set(statsRef, { count: 1 });
+        batch.set(statsRef, { count: 1, initialDeviceId: deviceId, lastDeviceId: deviceId });
       } else {
-        batch.update(statsRef, { count: increment(1) });
+        batch.update(statsRef, { 
+          count: increment(1),
+          lastDeviceId: deviceId
+        });
       }
 
       await batch.commit();
       setHasSignedUp(true);
+      localStorage.setItem('visionbuddy_has_voted', 'true');
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
-      throw error; // Re-throw to handle in UI
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -116,22 +124,23 @@ export const useWaitlist = () => {
 // Admin specific hook
 export const useAdminStats = () => {
   const { user, isAdmin } = useAuth();
-  const [data, setData] = useState<WaitlistSignup[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !isAdmin) return;
 
-    const q = query(collection(db, 'registrations'), orderBy('timestamp', 'desc'));
+    const q = query(collection(db, 'public_registrations'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const signups = snapshot.docs.map(doc => ({
+        id: doc.id,
         ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate().toLocaleString() || 'Pending...'
-      })) as WaitlistSignup[];
+        timestamp: (doc.data() as any).timestamp?.toDate().toLocaleString() || 'Pending...'
+      }));
       setData(signups);
       setLoading(false);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'registrations');
+      handleFirestoreError(error, OperationType.LIST, 'public_registrations');
     });
 
     return unsubscribe;

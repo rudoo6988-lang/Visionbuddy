@@ -30,35 +30,17 @@ import { ChatBot } from './components/ChatBot';
 // --- Sub-components ---
 
 const InterestCard = () => {
-  const { user, login, error: authError } = useAuth();
   const { hasSignedUp, signUp, loading, totalCount } = useWaitlist();
-  const [showSuccess, setShowSuccess] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const handleAction = async () => {
     setLocalError(null);
-    let currentUser = user;
-    
-    if (!currentUser) {
-      try {
-        currentUser = await login();
-      } catch (err: any) {
-        setLocalError("Login failed. Please check if popups are blocked.");
-        return;
-      }
-    }
-    
-    if (currentUser && !hasSignedUp) {
-      try {
-        await signUp(currentUser);
-        setShowSuccess(true);
-      } catch (err: any) {
-        setLocalError("Signup failed. Please try again.");
-      }
+    try {
+      await signUp();
+    } catch (err: any) {
+      setLocalError("Something went wrong. Please try again.");
     }
   };
-
-  const currentError = localError || (authError?.message);
 
   return (
     <motion.div 
@@ -75,9 +57,9 @@ const InterestCard = () => {
           Yes, I’m interested in Project <span className="text-primary italic">VisionBuddy</span>.
         </h2>
         
-        {currentError && (
+        {localError && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl text-sm">
-            {currentError}
+            {localError}
           </div>
         )}
 
@@ -96,8 +78,8 @@ const InterestCard = () => {
               <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
                 <CheckCircle2 size={48} />
               </div>
-              <p className="text-xl font-semibold text-green-400">You are already part of VisionBuddy.</p>
-              <p className="text-white/40 text-sm">Welcome to the future.</p>
+              <p className="text-xl font-semibold text-green-400">Already Counted!</p>
+              <p className="text-white/40 text-sm">Thank you for joining the movement.</p>
             </motion.div>
           ) : (
             <motion.button
@@ -106,7 +88,7 @@ const InterestCard = () => {
               whileTap={{ scale: 0.95 }}
               onClick={handleAction}
               disabled={loading}
-              className="w-full h-20 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-display font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex items-center justify-center gap-3"
+              className="w-full h-20 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-display font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -114,13 +96,11 @@ const InterestCard = () => {
                 <div className="flex flex-col items-center leading-none">
                   <div className="flex items-center gap-2 mb-1">
                     <Stars size={18} />
-                    <span>
-                      {loading ? "Syncing..." : (user ? "Count Me In" : "Login to Join")}
-                    </span>
+                    <span>Count Me In</span>
                     <ArrowRight size={18} />
                   </div>
                   <div className="text-[10px] uppercase tracking-[0.2em] text-white/70 font-mono">
-                    {totalCount.toLocaleString()} Joined So Far
+                    {totalCount.toLocaleString()} Visionaries So Far
                   </div>
                 </div>
               )}
