@@ -36,11 +36,21 @@ const InterestCard = () => {
 
   const handleAction = async () => {
     if (!user) {
-      await login();
+      try {
+        await login();
+        // user will be null in this closure, but useAuth will update and trigger re-render
+      } catch (err) {
+        console.error("Login failed", err);
+      }
       return;
     }
-    await signUp();
-    setShowSuccess(true);
+    
+    try {
+      await signUp();
+      setShowSuccess(true);
+    } catch (err) {
+      console.error("Signup failed", err);
+    }
   };
 
   return (
@@ -58,7 +68,7 @@ const InterestCard = () => {
           Yes, I’m interested in Project <span className="text-primary italic">VisionBuddy</span>.
         </h2>
         <p className="text-white/60 text-lg">
-          Join <span className="text-white font-semibold">{(totalCount).toLocaleString()}</span> visionaries paving the way for the future.
+          Join a growing community of visionaries paving the way for the future.
         </p>
 
         <AnimatePresence mode="wait">
@@ -82,16 +92,21 @@ const InterestCard = () => {
               whileTap={{ scale: 0.95 }}
               onClick={handleAction}
               disabled={loading}
-              className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-display font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex items-center justify-center gap-2"
+              className="w-full h-20 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-display font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex items-center justify-center gap-3"
             >
               {loading ? (
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                <>
-                  <Stars size={20} />
-                  Count Me In
-                  <ArrowRight size={20} />
-                </>
+                <div className="flex flex-col items-center leading-none">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Stars size={18} />
+                    <span>{user ? "Count Me In" : "Login to Join"}</span>
+                    <ArrowRight size={18} />
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/70 font-mono">
+                    {totalCount.toLocaleString()} Joined So Far
+                  </div>
+                </div>
               )}
             </motion.button>
           )}

@@ -58,16 +58,22 @@ service cloud.firestore {
                       isValidId(signupId) && 
                       signupId == request.auth.uid && 
                       isValidSignup(incoming()) &&
-                      // Ensure the global counter is being incremented
-                      getAfter(/databases/$(database)/documents/stats/global).data.count == 
-                      (exists(/databases/$(database)/documents/stats/global) ? get(/databases/$(database)/documents/stats/global).data.count : 0) + 1;
+                      // Ensure the global counter is being incremented correctly
+                      (
+                        (exists(/databases/$(database)/documents/stats/global) && 
+                         getAfter(/databases/$(database)/documents/stats/global).data.count == get(/databases/$(database)/documents/stats/global).data.count + 1)
+                        ||
+                        (!exists(/databases/$(database)/documents/stats/global) && 
+                         getAfter(/databases/$(database)/documents/stats/global).data.count == 1)
+                      );
                       
       allow update, delete: if false;
     }
 
     match /stats/global {
       allow read: if true; // Publicly viewable counter
-      allow create: if isSignedIn() && incoming().count == 1;
+      allow create: if isSignedIn() && incoming().count == 1 &&
+                      existsAfter(/databases/$(database)/documents/registrations/$(request.auth.uid));
       allow update: if isSignedIn() && 
                       incoming().count == (existing().count + 1) &&
                       // Enforce that a new registration is created in the same batch

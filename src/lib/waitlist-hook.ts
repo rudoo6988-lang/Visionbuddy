@@ -41,11 +41,10 @@ export const useWaitlist = () => {
       if (doc.exists()) {
         setTotalCount(doc.data().count || 0);
       } else {
-        // Document might not be initialized yet
         setTotalCount(0);
       }
     }, (error) => {
-      // Ignore initial permission errors if doc doesn't exist yet or during sign-in transitions
+      // Ignore permission errors - happens if stats doc doesn't exist yet and user doesn't have read access to root
       if (error.code !== 'permission-denied') {
         console.error("Stats sync error:", error);
       }
