@@ -58,7 +58,7 @@ const InterestCard = () => {
           Yes, I’m interested in Project <span className="text-primary italic">VisionBuddy</span>.
         </h2>
         <p className="text-white/60 text-lg">
-          Join <span className="text-white font-semibold">{(12541 + totalCount).toLocaleString()}</span> visionaries paving the way for the future.
+          Join <span className="text-white font-semibold">{(totalCount).toLocaleString()}</span> visionaries paving the way for the future.
         </p>
 
         <AnimatePresence mode="wait">
@@ -72,8 +72,8 @@ const InterestCard = () => {
               <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
                 <CheckCircle2 size={48} />
               </div>
-              <p className="text-xl font-semibold text-green-400">You're on the list!</p>
-              <p className="text-white/40 text-sm">Welcome to the inner circle.</p>
+              <p className="text-xl font-semibold text-green-400">You are already part of VisionBuddy.</p>
+              <p className="text-white/40 text-sm">Welcome to the future.</p>
             </motion.div>
           ) : (
             <motion.button
@@ -327,7 +327,7 @@ const AdminDashboard = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `visionbuddy_waitlist_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `visionbuddy_registrations_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

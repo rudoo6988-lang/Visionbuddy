@@ -24,9 +24,18 @@
     }
   },
   "firestore": {
-    "/waitlist/{signupId}": {
+    "/registrations/{signupId}": {
       "schema": "Signup",
       "description": "Collection of users interested in VisionBuddy"
+    },
+    "/stats/global": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "count": { "type": "number" }
+        }
+      },
+      "description": "Global statistics for the project"
     },
     "/admins/{adminId}": {
       "schema": "Admin",

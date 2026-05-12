@@ -49,7 +49,7 @@ service cloud.firestore {
 
     // --- Collection Rules ---
 
-    match /waitlist/{signupId} {
+    match /registrations/{signupId} {
       // Use UID as document ID to prevent duplicates
       allow get: if isSignedIn() && (signupId == request.auth.uid || isAdmin());
       allow list: if isAdmin();
@@ -58,9 +58,21 @@ service cloud.firestore {
                       isEmailVerified() && 
                       isValidId(signupId) && 
                       signupId == request.auth.uid && 
-                      isValidSignup(incoming());
+                      isValidSignup(incoming()) &&
+                      // Ensure the global counter is being incremented in the same batch
+                      getAfter(/databases/$(database)/documents/stats/global).data.count == 
+                      (exists(/databases/$(database)/documents/stats/global) ? get(/databases/$(database)/documents/stats/global).data.count : 0) + 1;
                       
-      allow update, delete: if false; // No modifications allowed after signup
+      allow update, delete: if false;
+    }
+
+    match /stats/global {
+      allow get: if true; // Publicly viewable counter
+      allow create: if isSignedIn() && incoming().count == 1; // First user initializes it
+      allow update: if isSignedIn() && 
+                      incoming().count == existing().count + 1 &&
+                      // Enforce that a new registration is created in the same batch
+                      existsAfter(/databases/$(database)/documents/registrations/$(request.auth.uid));
     }
 
     match /admins/{adminId} {
