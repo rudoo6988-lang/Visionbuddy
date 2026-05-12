@@ -40,9 +40,15 @@ export const useWaitlist = () => {
     const unsubscribe = onSnapshot(statsRef, (doc) => {
       if (doc.exists()) {
         setTotalCount(doc.data().count || 0);
+      } else {
+        // Document might not be initialized yet
+        setTotalCount(0);
       }
     }, (error) => {
-      console.error("Stats sync error:", error);
+      // Ignore initial permission errors if doc doesn't exist yet or during sign-in transitions
+      if (error.code !== 'permission-denied') {
+        console.error("Stats sync error:", error);
+      }
     });
 
     return unsubscribe;

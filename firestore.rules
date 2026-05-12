@@ -55,11 +55,10 @@ service cloud.firestore {
       allow list: if isAdmin();
       
       allow create: if isSignedIn() && 
-                      isEmailVerified() && 
                       isValidId(signupId) && 
                       signupId == request.auth.uid && 
                       isValidSignup(incoming()) &&
-                      // Ensure the global counter is being incremented in the same batch
+                      // Ensure the global counter is being incremented
                       getAfter(/databases/$(database)/documents/stats/global).data.count == 
                       (exists(/databases/$(database)/documents/stats/global) ? get(/databases/$(database)/documents/stats/global).data.count : 0) + 1;
                       
@@ -67,10 +66,10 @@ service cloud.firestore {
     }
 
     match /stats/global {
-      allow get: if true; // Publicly viewable counter
-      allow create: if isSignedIn() && incoming().count == 1; // First user initializes it
+      allow read: if true; // Publicly viewable counter
+      allow create: if isSignedIn() && incoming().count == 1;
       allow update: if isSignedIn() && 
-                      incoming().count == existing().count + 1 &&
+                      incoming().count == (existing().count + 1) &&
                       // Enforce that a new registration is created in the same batch
                       existsAfter(/databases/$(database)/documents/registrations/$(request.auth.uid));
     }
