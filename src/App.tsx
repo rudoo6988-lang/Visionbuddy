@@ -30,17 +30,18 @@ import { ChatBot } from './components/ChatBot';
 // --- Sub-components ---
 
 const InterestCard = () => {
-  const { user, login } = useAuth();
+  const { user, login, error: authError } = useAuth();
   const { hasSignedUp, signUp, loading, totalCount } = useWaitlist();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleAction = async () => {
+    setLocalError(null);
     if (!user) {
       try {
         await login();
-        // user will be null in this closure, but useAuth will update and trigger re-render
-      } catch (err) {
-        console.error("Login failed", err);
+      } catch (err: any) {
+        setLocalError("Login failed. Please check if popups are blocked.");
       }
       return;
     }
@@ -48,10 +49,12 @@ const InterestCard = () => {
     try {
       await signUp();
       setShowSuccess(true);
-    } catch (err) {
-      console.error("Signup failed", err);
+    } catch (err: any) {
+      setLocalError("Signup failed. Please try again.");
     }
   };
+
+  const currentError = localError || (authError?.message);
 
   return (
     <motion.div 
@@ -67,6 +70,13 @@ const InterestCard = () => {
         <h2 className="text-2xl md:text-3xl font-display font-bold leading-tight">
           Yes, I’m interested in Project <span className="text-primary italic">VisionBuddy</span>.
         </h2>
+        
+        {currentError && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl text-sm">
+            {currentError}
+          </div>
+        )}
+
         <p className="text-white/60 text-lg">
           Join a growing community of visionaries paving the way for the future.
         </p>
@@ -448,7 +458,7 @@ const AdminDashboard = () => {
 };
 
 const LandingPageWrapper = () => {
-  const { loading } = useAuth();
+  const { loading, error } = useAuth();
   
   if (loading) {
     return (
@@ -458,6 +468,21 @@ const LandingPageWrapper = () => {
           <h2 className="text-xl font-display font-bold animate-pulse">VisionBuddy</h2>
           <p className="text-white/30 text-xs uppercase tracking-widest">Initializing Neural Interface...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-dark flex flex-col items-center justify-center gap-6 p-6">
+        <div className="text-red-500 font-bold text-center">Initialization Error</div>
+        <p className="text-white/40 text-center max-w-sm">{error.message}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 font-bold"
+        >
+          Retry
+        </button>
       </div>
     );
   }
