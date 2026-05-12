@@ -54,10 +54,18 @@ export const useWaitlist = () => {
   }, []);
 
   const signUp = async () => {
-    if (!user) return;
+    if (!user || hasSignedUp) return;
     setLoading(true);
     const path = `registrations/${user.uid}`;
     try {
+      // Final check if already signed up (robustness)
+      const docRef = doc(db, 'registrations', user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setHasSignedUp(true);
+        return;
+      }
+
       const batch = writeBatch(db);
       
       const signupRef = doc(db, 'registrations', user.uid);
@@ -73,7 +81,6 @@ export const useWaitlist = () => {
       
       batch.set(signupRef, signupData);
 
-      // Verify if stats exists first to use set with merge or update
       const statsSnap = await getDoc(statsRef);
       if (!statsSnap.exists()) {
         batch.set(statsRef, { count: 1 });
@@ -85,6 +92,7 @@ export const useWaitlist = () => {
       setHasSignedUp(true);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
+      throw error; // Re-throw to handle in UI
     } finally {
       setLoading(false);
     }

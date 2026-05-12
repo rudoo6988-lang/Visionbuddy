@@ -110,7 +110,9 @@ const InterestCard = () => {
                 <div className="flex flex-col items-center leading-none">
                   <div className="flex items-center gap-2 mb-1">
                     <Stars size={18} />
-                    <span>{user ? "Count Me In" : "Login to Join"}</span>
+                    <span>
+                      {loading ? "Syncing..." : (user ? "Count Me In" : "Login to Join")}
+                    </span>
                     <ArrowRight size={18} />
                   </div>
                   <div className="text-[10px] uppercase tracking-[0.2em] text-white/70 font-mono">
