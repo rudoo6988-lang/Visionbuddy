@@ -20,7 +20,9 @@ import {
   Share2,
   Twitter,
   Facebook,
-  Instagram
+  Linkedin,
+  Instagram,
+  Link2
 } from 'lucide-react';
 import { FirebaseProvider, useAuth } from './components/FirebaseProvider';
 import { useWaitlist, useAdminStats } from './lib/waitlist-hook';
@@ -272,19 +274,68 @@ const LandingPage = () => {
           <div className="absolute top-0 right-0 p-8 text-primary/10">
             <Globe size={120} />
           </div>
-          <h2 className="text-4xl font-display font-bold">Join the Movement.</h2>
-          <p className="text-white/60 max-w-xl mx-auto text-lg">
+          <h2 className="text-3xl md:text-4xl font-display font-bold">Join the Movement.</h2>
+          <p className="text-white/60 max-w-xl mx-auto text-lg leading-relaxed">
             Share Project VisionBuddy with your network and help us shape a more intelligent world.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#1DA1F2]/10 border border-[#1DA1F2]/20 text-[#1DA1F2] hover:bg-[#1DA1F2]/20 transition-all font-bold">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const text = encodeURIComponent("I just joined the VisionBuddy waitlist! The future of augmented vision is coming. 👁️⚡ #VisionBuddy #AI #Tech");
+                const url = encodeURIComponent(window.location.href);
+                window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+              }}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#1DA1F2]/10 border border-[#1DA1F2]/20 text-[#1DA1F2] hover:bg-[#1DA1F2]/20 transition-all font-bold shadow-lg shadow-[#1DA1F2]/5"
+            >
               <Twitter size={20} />
-              Share on Twitter
-            </button>
-            <button className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all font-bold">
-              <Share2 size={20} />
+              Twitter
+            </motion.button>
+
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const url = encodeURIComponent(window.location.href);
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+              }}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20 text-[#1877F2] hover:bg-[#1877F2]/20 transition-all font-bold shadow-lg shadow-[#1877F2]/5"
+            >
+              <Facebook size={20} />
+              Facebook
+            </motion.button>
+
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const url = encodeURIComponent(window.location.href);
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+              }}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#0A66C2]/10 border border-[#0A66C2]/20 text-[#0A66C2] hover:bg-[#0A66C2]/20 transition-all font-bold shadow-lg shadow-[#0A66C2]/5"
+            >
+              <Linkedin size={20} />
+              LinkedIn
+            </motion.button>
+
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                const btn = document.activeElement as HTMLButtonElement;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="flex items-center gap-2"><CheckCircle2 size={20} /> Copied!</span>';
+                setTimeout(() => {
+                  btn.innerHTML = originalText;
+                }, 2000);
+              }}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all font-bold min-w-[160px]"
+            >
+              <Link2 size={20} />
               Copy Link
-            </button>
+            </motion.button>
           </div>
         </section>
       </main>
