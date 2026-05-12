@@ -301,12 +301,21 @@ const LandingPage = () => {
 };
 
 const AdminDashboard = () => {
-  const { isAdmin, logout } = useAuth();
-  const { data, loading } = useAdminStats();
+  const { isAdmin, logout, loading: authLoading } = useAuth();
+  const { data, loading: statsLoading } = useAdminStats();
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  if (!isAdmin && !loading) {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-dark flex flex-col items-center justify-center gap-6">
+        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="text-white/30 text-xs uppercase tracking-widest animate-pulse font-medium">Syncing Admin Access...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return <Navigate to="/" />;
   }
 
@@ -376,7 +385,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="glass rounded-2xl border border-white/5 overflow-hidden">
-          {loading ? (
+          {statsLoading ? (
             <div className="p-20 flex flex-col items-center gap-4">
               <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
               <p className="text-white/40 animate-pulse">Syncing with neural link...</p>
@@ -423,6 +432,24 @@ const AdminDashboard = () => {
   );
 };
 
+const LandingPageWrapper = () => {
+  const { loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark flex flex-col items-center justify-center gap-6">
+        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <div className="flex flex-col items-center gap-2">
+          <h2 className="text-xl font-display font-bold animate-pulse">VisionBuddy</h2>
+          <p className="text-white/30 text-xs uppercase tracking-widest">Initializing Neural Interface...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return <LandingPage />;
+};
+
 // --- Main Root ---
 
 export default function App() {
@@ -430,7 +457,7 @@ export default function App() {
     <FirebaseProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<LandingPageWrapper />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

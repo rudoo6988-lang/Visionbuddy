@@ -3,7 +3,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Send, X, Bot, User } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn('GEMINI_API_KEY is not defined. ChatBot AI features will be disabled.');
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 export const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,6 +41,12 @@ export const ChatBot: React.FC = () => {
     setIsTyping(true);
 
     try {
+      const ai = getAI();
+      if (!ai) {
+        setMessages(prev => [...prev, { role: 'bot', text: "I'm currently disconnected from my neural core (API Key missing). Please contact support!" }]);
+        return;
+      }
+
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: [
