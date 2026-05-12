@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, serverTimestamp, collection, query, orderBy, onSnapshot, writeBatch, increment } from 'firebase/firestore';
+import { User } from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  serverTimestamp, 
+  collection, 
+  query, 
+  orderBy, 
+  onSnapshot, 
+  writeBatch, 
+  increment 
+} from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from '../components/FirebaseProvider';
 import { WaitlistSignup, OperationType } from '../types';
@@ -53,13 +64,14 @@ export const useWaitlist = () => {
     return unsubscribe;
   }, []);
 
-  const signUp = async () => {
-    if (!user || hasSignedUp) return;
+  const signUp = async (passedUser?: User | null) => {
+    const activeUser = passedUser || user;
+    if (!activeUser || hasSignedUp) return;
     setLoading(true);
-    const path = `registrations/${user.uid}`;
+    const path = `registrations/${activeUser.uid}`;
     try {
       // Final check if already signed up (robustness)
-      const docRef = doc(db, 'registrations', user.uid);
+      const docRef = doc(db, 'registrations', activeUser.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setHasSignedUp(true);
@@ -68,14 +80,14 @@ export const useWaitlist = () => {
 
       const batch = writeBatch(db);
       
-      const signupRef = doc(db, 'registrations', user.uid);
+      const signupRef = doc(db, 'registrations', activeUser.uid);
       const statsRef = doc(db, 'stats', 'global');
 
       const signupData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || 'Anonymous',
-        photoURL: user.photoURL || '',
+        uid: activeUser.uid,
+        email: activeUser.email,
+        displayName: activeUser.displayName || 'Anonymous',
+        photoURL: activeUser.photoURL || '',
         timestamp: serverTimestamp(),
       };
       

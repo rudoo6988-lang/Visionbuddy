@@ -37,20 +37,24 @@ const InterestCard = () => {
 
   const handleAction = async () => {
     setLocalError(null);
-    if (!user) {
+    let currentUser = user;
+    
+    if (!currentUser) {
       try {
-        await login();
+        currentUser = await login();
       } catch (err: any) {
         setLocalError("Login failed. Please check if popups are blocked.");
+        return;
       }
-      return;
     }
     
-    try {
-      await signUp();
-      setShowSuccess(true);
-    } catch (err: any) {
-      setLocalError("Signup failed. Please try again.");
+    if (currentUser && !hasSignedUp) {
+      try {
+        await signUp(currentUser);
+        setShowSuccess(true);
+      } catch (err: any) {
+        setLocalError("Signup failed. Please try again.");
+      }
     }
   };
 

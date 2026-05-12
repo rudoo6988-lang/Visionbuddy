@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, googleProvider, db } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -33,14 +34,32 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return unsubscribe;
   }, []);
 
-  const login = async () => {
+  const login = async (): Promise<User | null> => {
     setError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const loggedInUser = result.user;
+      
+      // Sync user profile to Firestore
+      try {
+        const userRef = doc(db, 'users', loggedInUser.uid);
+        await setDoc(userRef, {
+          uid: loggedInUser.uid,
+          email: loggedInUser.email,
+          displayName: loggedInUser.displayName,
+          photoURL: loggedInUser.photoURL,
+          timestamp: serverTimestamp()
+        }, { merge: true });
+      } catch (syncErr) {
+        console.error("User profile sync failed", syncErr);
+        // We don't block login if sync fails, but we log it
+      }
+
+      return loggedInUser;
     } catch (err: any) {
       console.error('Login failed', err);
       setError(err instanceof Error ? err : new Error(String(err)));
-      // On mobile, if popup fails, we could suggest something else, but for now we just log it
+      throw err;
     }
   };
 
