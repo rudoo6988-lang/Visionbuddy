@@ -31,6 +31,73 @@ import { ChatBot } from './components/ChatBot';
 
 // --- Sub-components ---
 
+const FuturisticBackground = () => {
+  return (
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+      {/* Dynamic Grid */}
+      <div className="absolute inset-0 bg-noise opacity-[0.03] brightness-150 contrast-150 mix-blend-overlay"></div>
+      <div className="absolute inset-0 bg-grid-white bg-[size:64px_64px]"></div>
+      
+      {/* Glow lines */}
+      <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-dark"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-dark via-transparent to-dark"></div>
+      <motion.div 
+        animate={{ 
+          y: [0, -40, 0],
+          x: [0, 20, 0],
+          scale: [1, 1.1, 1],
+          opacity: [0.15, 0.25, 0.15]
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 -left-20 w-[40vw] h-[40vw] bg-primary/20 blur-[120px] rounded-full"
+      />
+      <motion.div 
+        animate={{ 
+          y: [0, 50, 0],
+          x: [0, -30, 0],
+          scale: [1, 1.2, 1],
+          opacity: [0.1, 0.2, 0.1]
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute bottom-1/4 -right-20 w-[50vw] h-[50vw] bg-secondary/20 blur-[150px] rounded-full"
+      />
+      <motion.div 
+        animate={{ 
+          y: [0, -60, 0],
+          x: [0, -40, 0],
+          opacity: [0.05, 0.15, 0.05]
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+        className="absolute top-3/4 left-1/2 -translate-x-1/2 w-[30vw] h-[30vw] bg-accent/15 blur-[100px] rounded-full"
+      />
+
+      {/* Floating Glass Squares */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ 
+            opacity: [0.1, 0.3, 0.1],
+            y: [-20, 20, -20],
+            rotate: [0, 90, 180, 270, 360],
+          }}
+          transition={{ 
+            duration: 10 + i * 2, 
+            repeat: Infinity, 
+            ease: "linear",
+            delay: i * 1.5
+          }}
+          style={{
+            left: `${15 + i * 15}%`,
+            top: `${20 + (i % 3) * 25}%`,
+          }}
+          className="w-12 h-12 glass border border-white/10 rounded-xl"
+        />
+      ))}
+    </div>
+  );
+};
+
 const InterestCard = () => {
   const { hasSignedUp, signUp, loading, totalCount } = useWaitlist();
   const [localError, setLocalError] = useState<string | null>(null);
@@ -149,10 +216,15 @@ const Testimonials = () => {
           <div className="flex gap-1 mb-4 text-primary">
             {[1,2,3,4,5].map(j => <Stars key={j} size={14} fill="currentColor" />)}
           </div>
-          <p className="text-white/70 italic mb-6">"{item.text}"</p>
-          <div>
-            <p className="font-display font-bold text-white">{item.name}</p>
-            <p className="text-xs text-white/30 uppercase tracking-widest">{item.role}</p>
+          <p className="text-white/70 italic mb-6 leading-relaxed">"{item.text}"</p>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center font-bold text-xs border border-white/5">
+              {item.name.charAt(0)}
+            </div>
+            <div>
+              <p className="font-display font-bold text-white">{item.name}</p>
+              <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">{item.role}</p>
+            </div>
           </div>
         </motion.div>
       ))}
@@ -166,14 +238,11 @@ const LandingPage = () => {
   const { login, user } = useAuth();
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-[100vh] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
-      <div className="absolute top-1/4 -left-1/4 w-[50vw] h-[50vw] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-1/4 -right-1/4 w-[50vw] h-[50vw] bg-secondary/10 blur-[120px] rounded-full pointer-events-none"></div>
+    <div className="min-h-screen relative bg-dark">
+      <FuturisticBackground />
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 w-full z-40 glass border-b border-white/5">
+      <nav className="fixed top-0 left-0 w-full z-40 glass border-b border-white/5 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -211,31 +280,53 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      <main className="pt-40 pb-20 px-6 max-w-7xl mx-auto space-y-32">
+      <main className="pt-40 pb-20 px-6 max-w-7xl mx-auto space-y-32 relative z-10">
         {/* Hero Section */}
-        <section className="text-center space-y-8 max-w-4xl mx-auto">
+        <motion.section 
+          initial="initial"
+          animate="animate"
+          variants={{
+            animate: { transition: { staggerChildren: 0.1 } }
+          }}
+          className="text-center space-y-8 max-w-4xl mx-auto relative shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)]"
+        >
+          {/* Scanning Ray Detail */}
+          <motion.div 
+            animate={{ 
+              top: ["0%", "100%", "0%"],
+              opacity: [0, 1, 0]
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm pointer-events-none z-20"
+          />
+
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest"
+            variants={{
+              initial: { opacity: 0, scale: 0.9 },
+              animate: { opacity: 1, scale: 1 }
+            }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest backdrop-blur-md"
           >
             <Stars size={14} />
             The Future of Vision is Here
           </motion.div>
           
           <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={{
+              initial: { opacity: 0, y: 30 },
+              animate: { opacity: 1, y: 0 }
+            }}
             className="text-5xl md:text-7xl lg:text-8xl font-display font-extrabold tracking-tight leading-[1.05]"
           >
             See Beyond The <br /> 
-            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">Visible World.</span>
+            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent italic">Visible World.</span>
           </motion.h1>
 
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            variants={{
+              initial: { opacity: 0, y: 20 },
+              animate: { opacity: 1, y: 0 }
+            }}
             className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
           >
             VisionBuddy is an AI companion designed to augment human perception. 
@@ -243,9 +334,10 @@ const LandingPage = () => {
           </motion.p>
           
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            variants={{
+              initial: { opacity: 0, y: 20 },
+              animate: { opacity: 1, y: 0 }
+            }}
             className="pt-10 flex flex-col items-center gap-8"
           >
             <Countdown />
@@ -253,7 +345,7 @@ const LandingPage = () => {
               Launching in Q3 2026
             </div>
           </motion.div>
-        </section>
+        </motion.section>
 
         {/* Interest Section */}
         <section id="waitlist" className="py-20 relative">
@@ -323,6 +415,18 @@ const LandingPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
+                window.open(`https://www.instagram.com/visionbuddy_india/`, '_blank');
+              }}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#E4405F]/10 border border-[#E4405F]/20 text-[#E4405F] hover:bg-[#E4405F]/20 transition-all font-bold shadow-lg shadow-[#E4405F]/5"
+            >
+              <Instagram size={20} />
+              Instagram
+            </motion.button>
+
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
                 const btn = document.activeElement as HTMLButtonElement;
                 const originalText = btn.innerHTML;
@@ -350,9 +454,15 @@ const LandingPage = () => {
             © 2026 Project VisionBuddy. All rights reserved.
           </p>
           <div className="flex gap-6 text-white/30">
-             <Twitter size={18} className="hover:text-primary transition-colors cursor-pointer" />
-             <Instagram size={18} className="hover:text-primary transition-colors cursor-pointer" />
-             <Facebook size={18} className="hover:text-primary transition-colors cursor-pointer" />
+             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+               <Twitter size={18} />
+             </a>
+             <a href="https://www.instagram.com/visionbuddy_india/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+               <Instagram size={18} />
+             </a>
+             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+               <Facebook size={18} />
+             </a>
           </div>
         </div>
       </footer>
