@@ -235,7 +235,7 @@ const Testimonials = () => {
 // --- Page Components ---
 
 const LandingPage = () => {
-  const { login, user } = useAuth();
+  const { login, user, isAdmin } = useAuth();
 
   return (
     <div className="min-h-screen relative bg-dark">
@@ -252,13 +252,13 @@ const LandingPage = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
-            <a href="#" className="hover:text-white transition-colors">Vision</a>
-            <a href="#" className="hover:text-white transition-colors">Safety</a>
-            <a href="#" className="hover:text-white transition-colors">Company</a>
+            <a href="#vision" className="hover:text-white transition-colors">Vision</a>
+            <a href="#safety" className="hover:text-white transition-colors">Safety</a>
+            <a href="#waitlist" className="hover:text-white transition-colors">Join</a>
           </div>
 
           <div className="flex items-center gap-4">
-            {user?.email === 'rudoo6988@gmail.com' && (
+            {isAdmin && (
               <Link to="/admin" className="text-xs font-bold uppercase tracking-widest text-primary hover:neon-text transition-all">
                 Dashboard
               </Link>
@@ -283,6 +283,7 @@ const LandingPage = () => {
       <main className="pt-40 pb-20 px-6 max-w-7xl mx-auto space-y-32 relative z-10">
         {/* Hero Section */}
         <motion.section 
+          id="vision"
           initial="initial"
           animate="animate"
           variants={{
@@ -353,7 +354,7 @@ const LandingPage = () => {
         </section>
 
         {/* Features / Testimonials */}
-        <section className="space-y-16">
+        <section id="safety" className="space-y-16">
           <div className="text-center space-y-4">
              <h2 className="text-3xl md:text-4xl font-display font-bold">Trusted by the Future.</h2>
              <p className="text-white/40 max-w-lg mx-auto">Industry leaders and early adopters are already talking about the VisionBuddy impact.</p>
@@ -493,14 +494,13 @@ const AdminDashboard = () => {
 
   const filteredData = useMemo(() => {
     return data.filter(s => 
-      s.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchTerm.toLowerCase())
+      s.deviceId.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
   const exportCSV = () => {
-    const headers = ['Name', 'Email', 'UID', 'Timestamp'];
-    const rows = filteredData.map(s => [s.displayName, s.email, s.uid, s.timestamp]);
+    const headers = ['Device ID', 'Timestamp'];
+    const rows = filteredData.map(s => [s.deviceId, s.timestamp]);
     const csvContent = "data:text/csv;charset=utf-8," 
       + headers.join(',') + "\n"
       + rows.map(e => e.join(",")).join("\n");
@@ -540,7 +540,7 @@ const AdminDashboard = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Search by name or email..."
+                  placeholder="Search by Device ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-primary/50 transition-all"
@@ -567,9 +567,8 @@ const AdminDashboard = () => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-white/5 text-xs text-white/40 uppercase tracking-widest font-bold">
-                    <th className="px-6 py-4">User</th>
-                    <th className="px-6 py-4">Email</th>
-                    <th className="px-6 py-4">ID</th>
+                    <th className="px-6 py-4">Device ID</th>
+                    <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Signed Up</th>
                   </tr>
                 </thead>
@@ -578,12 +577,15 @@ const AdminDashboard = () => {
                     <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <img src={s.photoURL} alt="" className="w-10 h-10 rounded-lg border border-white/10" />
-                          <span className="font-medium group-hover:text-primary transition-colors">{s.displayName}</span>
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                            <Globe size={18} />
+                          </div>
+                          <span className="font-mono text-sm group-hover:text-primary transition-colors">{s.deviceId}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-white/60 text-sm">{s.email}</td>
-                      <td className="px-6 py-4 text-white/30 font-mono text-xs">{s.uid.slice(0, 8)}...</td>
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] uppercase font-bold tracking-widest">Verified</span>
+                      </td>
                       <td className="px-6 py-4 text-white/60 text-sm whitespace-nowrap">{s.timestamp}</td>
                     </tr>
                   ))}

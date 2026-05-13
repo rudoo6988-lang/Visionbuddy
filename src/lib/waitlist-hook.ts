@@ -27,7 +27,10 @@ export const useWaitlist = () => {
     const voted = localStorage.getItem('visionbuddy_has_voted') === 'true';
 
     if (!id) {
-      id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      // More robust ID generation combining time and random components
+      const randomPart = Math.random().toString(36).substring(2, 11);
+      const timePart = Date.now().toString(36);
+      id = `${timePart}-${randomPart}`;
       localStorage.setItem('visionbuddy_device_id', id);
     }
 

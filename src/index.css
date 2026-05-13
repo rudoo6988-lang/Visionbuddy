@@ -48,6 +48,10 @@
   background-image: url("https://grainy-gradients.vercel.app/noise.svg");
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--color-dark);
   color: #fafafa;

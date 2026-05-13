@@ -64,10 +64,12 @@ service cloud.firestore {
     match /stats/global {
       allow read: if true;
       allow create: if incoming().count == 1 &&
+                      !exists(/databases/$(database)/documents/public_registrations/$(incoming().initialDeviceId)) &&
                       existsAfter(/databases/$(database)/documents/public_registrations/$(incoming().initialDeviceId));
       allow update: if incoming().count == (existing().count + 1) &&
                       (
-                        existsAfter(/databases/$(database)/documents/public_registrations/$(request.resource.data.lastDeviceId)) ||
+                        (!exists(/databases/$(database)/documents/public_registrations/$(request.resource.data.lastDeviceId)) &&
+                         existsAfter(/databases/$(database)/documents/public_registrations/$(request.resource.data.lastDeviceId))) ||
                         isAdmin()
                       );
     }

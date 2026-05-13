@@ -47,20 +47,28 @@ export const ChatBot: React.FC = () => {
         return;
       }
 
+      // Format messages for history
+      const history = messages.slice(-6).map(m => ({
+        role: m.role === 'bot' ? 'model' : 'user',
+        parts: [{ text: m.text }]
+      }));
+
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: [
+          ...history,
           {
             role: "user",
-            parts: [{ text: `You are VisionBuddy, a futuristic AI assistant for a project called VisionBuddy. 
-              The project is a visionary AI companion that helps people see and understand the world in new ways. 
-              Be futuristic, polite, and exciting. 
-              Context: This is a landing page for collecting interest.
-              User says: ${userMsg}` }]
+            parts: [{ text: userMsg }]
           }
         ],
         config: {
-            systemInstruction: "You are a helpful, futuristic, and encouraging AI assistant for Project VisionBuddy."
+            systemInstruction: `You are VisionBuddy AI, the digital soul of Project VisionBuddy. 
+              Project VisionBuddy is an advanced AI companion that enhances human perception through spatial computing and real-time environment analysis.
+              Theme: Futuristic, minimalist, elite, and inspiring.
+              Tone: Professional yet conversational. Use tech-forward language (e.g., "perceptual layers", "neural sync", "spatial awareness").
+              Always clarify that we are in the "Waitlist" phase and launching in Q3 2026.
+              Encourage users to join the waitlist and share with friends.`
         }
       });
 
